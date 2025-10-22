@@ -11,19 +11,6 @@ from tinydb import TinyDB, Query
 import os
 
 # Page configuration
-# --- NEW: Login-related session state initialization ---
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = False
-if 'login_attempts' not in st.session_state:
-    st.session_state.login_attempts = 0
-if 'app_locked' not in st.session_state:
-    st.session_state.app_locked = False
-# --- END NEW ---
-
-# If the app is locked, display a message and stop immediately
-if st.session_state.app_locked:
-    st.error("Application locked due to too many failed login attempts.")
-    st.stop()
 st.set_page_config(
     page_title="HomeoClinic AI - Your Virtual Homeopathy Doctor",
     page_icon="🌿",
@@ -107,7 +94,6 @@ st.markdown("""
     .prescription-card {
         background: black;
         color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Darker shadow for dark theme */
         padding: 2rem;
         border-radius: 15px;
         margin: 2rem 0;
@@ -166,8 +152,7 @@ st.markdown("""
     
     /* Sidebar styling */
     .css-1d391kg {
-        background-color: #2a2a2a; /* Dark sidebar background */
-        color: #e0e0e0; /* Light text color for sidebar */
+        background-color: #f8f9fa;
     }
     
     /* Statistics card */
@@ -180,7 +165,6 @@ st.markdown("""
         text-align: center;
     }
     
-    
     .stat-value {
         font-size: 2rem;
         font-weight: bold;
@@ -191,38 +175,6 @@ st.markdown("""
         color: #ccc;
         font-size: 0.9rem;
         margin-top: 0.5rem;
-    }
-
-    /* Ensure Streamlit's default text elements are readable in dark theme */
-    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown, .stSelectbox label, .stRadio label, .stCheckbox label {
-        color: #e0e0e0;
-    }
-
-    /* Streamlit input fields */
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea,
-    .stSelectbox > div > div > div > div,
-    .stDateInput > div > div > input {
-        background-color: #3a3a3a;
-        color: #e0e0e0;
-        border: 1px solid #555;
-    }
-
-    /* Streamlit alerts */
-    .stAlert {
-        background-color: #3a3a3a;
-        color: #e0e0e0;
-        border-left: 4px solid; /* Will use Streamlit's default alert border color */
-    }
-
-    /* Expander styling in sidebar */
-    .stExpander {
-        background-color: #2a2a2a; /* Match sidebar background */
-        color: #e0e0e0;
-    }
-    .stExpander > div > div > button { /* Expander header button */
-        color: #e0e0e0;
-        background-color: #3a3a3a;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -245,7 +197,7 @@ def get_consultations_table():
     db = init_database()
     return db.table('consultations')
 
-def save_session_to_db(session_id: str, messages: List[Dict], patient_info: Dict, symptoms: List[str], current_prescription: Dict = None, loaded_from_db: bool = False):
+def save_session_to_db(session_id: str, messages: List[Dict], patient_info: Dict, symptoms: List[str], current_prescription: Dict = None):
     """Save current session to database"""
     sessions = get_sessions_table()
     session_data = {
@@ -255,7 +207,6 @@ def save_session_to_db(session_id: str, messages: List[Dict], patient_info: Dict
         'patient_info': patient_info,
         'symptoms_collected': symptoms,
         'last_updated': datetime.now().isoformat(),
-        'loaded_from_db': loaded_from_db, # Persist this flag
         'message_count': len(messages)
     }
     
@@ -341,7 +292,6 @@ def initialize_session_state():
             st.session_state.messages = saved_session.get('messages', [])
             st.session_state.patient_info = saved_session.get('patient_info', {})
             st.session_state.symptoms_collected = saved_session.get('symptoms_collected', [])
-            st.session_state.prescription_generated = saved_session.get('current_prescription', None) is not None
             st.session_state.current_prescription = saved_session.get('current_prescription', None)
 
 # Configure Gemini API
@@ -354,89 +304,6 @@ def configure_gemini():
     except Exception as e:
         st.error(f"Error configuring Gemini API: {str(e)}")
         return False
-
-# --- NEW: Login Page Function ---
-def login_page():
-    """Displays the login page and handles authentication."""
-    st.markdown("""
-    <style>
-        /* Center content for login page */
-        .stApp > header { /* Hide Streamlit header on login page */
-            visibility: hidden;
-        }
-        .stApp > div:first-child { /* Hide Streamlit sidebar on login page */
-            display: none;
-        }
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-        }
-        .login-card {
-            background-color: #2a2a2a; /* Dark card background */
-            padding: 3rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Darker shadow */
-            width: 400px;
-            max-width: 90%; /* Responsive width */
-            text-align: center;
-        }
-        .login-title {
-            color: #e0e0e0; /* Light title color */
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Subtle shadow for contrast */
-            font-size: 2.2rem;
-            margin-bottom: 1.5rem;
-        }
-        .stTextInput > div > div > input {
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            padding: 0.75rem;
-            background-color: #3a3a3a; /* Dark input background */
-            color: #e0e0e0; /* Light input text */
-        }
-        .stButton > button {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 5px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-top: 1rem;
-        }
-        /* Ensure alert messages are readable */
-        .stAlert { background-color: #4a4a4a; color: #e0e0e0; }
-        .stAlert {
-            margin-top: 1rem;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="login-container"><div class="login-card">', unsafe_allow_html=True)
-    st.markdown('<h1 class="login-title">🔒 HomeoClinic AI Login</h1>', unsafe_allow_html=True)
-
-    username = st.text_input("Username", key="login_username")
-    password = st.text_input("Password", type="password", key="login_password")
-
-    if st.button("Login", key="login_button"):
-        # Retrieve credentials from Streamlit secrets
-        # Using direct access will raise KeyError if secrets are not configured, enforcing strictness
-        if username == st.secrets["APP_USERNAME"] and password == st.secrets["APP_PASSWORD"]:
-            st.session_state.authenticated = True
-            st.session_state.login_attempts = 0  # Reset attempts on success
-            st.rerun() # Rerun to clear login page and show main app
-        else:
-            st.session_state.login_attempts += 1
-            if st.session_state.login_attempts >= 3:
-                st.session_state.app_locked = True
-                st.error("Application locked due to too many failed login attempts.")
-                st.stop() # Stop execution immediately, no warning needed as per request
-            else:
-                st.error(f"Invalid username or password. Attempts left: {3 - st.session_state.login_attempts}")
-    
-    st.markdown('</div></div>', unsafe_allow_html=True)
-# --- END NEW ---
 
 # System prompt for the homeopathy doctor
 SYSTEM_PROMPT = """You are Dr. HomeoHeal, an experienced and compassionate homeopathic doctor with over 20 years of practice. Your approach is:
@@ -769,7 +636,6 @@ def display_sidebar():
                         st.session_state.patient_info = loaded.get('patient_info', {})
                         st.session_state.symptoms_collected = loaded.get('symptoms_collected', [])
                         st.session_state.current_prescription = loaded.get('current_prescription', None)
-                        # Set prescription_generated flag based on whether a prescription was loaded
                         st.session_state.prescription_generated = st.session_state.current_prescription is not None
                         st.session_state.chat_session = None
                         st.session_state.chat_model = None
@@ -1107,7 +973,7 @@ def restore_chat_context():
             except:
                 pass  # Skip if there's an error
 
-def main_app_content():
+def main():
     """Main application function"""
     # Initialize session state
     initialize_session_state()
@@ -1222,20 +1088,11 @@ def display_memory_indicator():
         """.format(count=len(st.session_state.messages)), unsafe_allow_html=True)
 
 # Run the app
-# --- MODIFIED: Main execution block to include login ---
 if __name__ == "__main__":
-# The login-related session state variables are initialized at the top of the script.
-# The 'app_locked' check is also at the top.
-
-    if not st.session_state.authenticated:
-        login_page()
-    else:
-        # User is authenticated, proceed with the main application
-        # Show memory indicator (existing logic)
-        if 'messages' in st.session_state and len(st.session_state.messages) > 2:
-            with st.sidebar:
-                st.markdown("---")
-                display_memory_indicator()
-        
-        main_app_content()
-# --- END MODIFIED ---
+    # Show memory indicator
+    if 'messages' in st.session_state and len(st.session_state.messages) > 2:
+        with st.sidebar:
+            st.markdown("---")
+            display_memory_indicator()
+    
+    main()
