@@ -154,7 +154,7 @@ st.markdown("""
     
     /* Statistics card */
     .stat-card {
-        background: white;
+        background: black;
         padding: 1.5rem;
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -165,11 +165,11 @@ st.markdown("""
     .stat-value {
         font-size: 2rem;
         font-weight: bold;
-        color: #667eea;
+        color: white;
     }
     
     .stat-label {
-        color: #666;
+        color: #ccc;
         font-size: 0.9rem;
         margin-top: 0.5rem;
     }
