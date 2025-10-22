@@ -197,12 +197,13 @@ def get_consultations_table():
     db = init_database()
     return db.table('consultations')
 
-def save_session_to_db(session_id: str, messages: List[Dict], patient_info: Dict, symptoms: List[str]):
+def save_session_to_db(session_id: str, messages: List[Dict], patient_info: Dict, symptoms: List[str], current_prescription: Dict = None):
     """Save current session to database"""
     sessions = get_sessions_table()
     session_data = {
         'session_id': session_id,
         'messages': messages,
+        'current_prescription': current_prescription,
         'patient_info': patient_info,
         'symptoms_collected': symptoms,
         'last_updated': datetime.now().isoformat(),
@@ -591,7 +592,8 @@ def display_sidebar():
                     st.session_state.session_id,
                     st.session_state.messages,
                     st.session_state.patient_info,
-                    st.session_state.symptoms_collected
+                    st.session_state.symptoms_collected,
+                    st.session_state.current_prescription
                 )
                 st.success("Session saved!")
         
@@ -602,7 +604,8 @@ def display_sidebar():
                     st.session_state.session_id,
                     st.session_state.messages,
                     st.session_state.patient_info,
-                    st.session_state.symptoms_collected
+                    st.session_state.symptoms_collected,
+                    st.session_state.current_prescription
                 )
                 # Reset for new session
                 st.session_state.session_id = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
@@ -632,6 +635,8 @@ def display_sidebar():
                         st.session_state.messages = loaded.get('messages', [])
                         st.session_state.patient_info = loaded.get('patient_info', {})
                         st.session_state.symptoms_collected = loaded.get('symptoms_collected', [])
+                        st.session_state.current_prescription = loaded.get('current_prescription', None)
+                        st.session_state.prescription_generated = st.session_state.current_prescription is not None
                         st.session_state.chat_session = None
                         st.session_state.chat_model = None
                         st.success(f"Loaded session: {session_id}")
@@ -763,7 +768,8 @@ def process_ai_response(response_text: str):
         st.session_state.session_id,
         st.session_state.messages,
         st.session_state.patient_info,
-        st.session_state.symptoms_collected
+        st.session_state.symptoms_collected,
+        st.session_state.current_prescription
     )
 
 def display_prescription(prescription: Dict):
@@ -1048,7 +1054,8 @@ def main():
             st.session_state.session_id,
             st.session_state.messages,
             st.session_state.patient_info,
-            st.session_state.symptoms_collected
+            st.session_state.symptoms_collected,
+            st.session_state.current_prescription
         )
         
         # Rerun to display new messages
