@@ -92,7 +92,8 @@ st.markdown("""
     
     /* Prescription card styling */
     .prescription-card {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: black;
+        color: white;
         padding: 2rem;
         border-radius: 15px;
         margin: 2rem 0;
@@ -101,7 +102,7 @@ st.markdown("""
     
     .prescription-header {
         text-align: center;
-        color: #333;
+        color: white;
         border-bottom: 2px solid #667eea;
         padding-bottom: 1rem;
         margin-bottom: 1.5rem;
