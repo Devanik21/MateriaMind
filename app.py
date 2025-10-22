@@ -11,6 +11,19 @@ from tinydb import TinyDB, Query
 import os
 
 # Page configuration
+# --- NEW: Login-related session state initialization ---
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'login_attempts' not in st.session_state:
+    st.session_state.login_attempts = 0
+if 'app_locked' not in st.session_state:
+    st.session_state.app_locked = False
+# --- END NEW ---
+
+# If the app is locked, display a message and stop immediately
+if st.session_state.app_locked:
+    st.error("Application locked due to too many failed login attempts.")
+    st.stop()
 st.set_page_config(
     page_title="HomeoClinic AI - Your Virtual Homeopathy Doctor",
     page_icon="🌿",
@@ -304,6 +317,86 @@ def configure_gemini():
     except Exception as e:
         st.error(f"Error configuring Gemini API: {str(e)}")
         return False
+
+# --- NEW: Login Page Function ---
+def login_page():
+    """Displays the login page and handles authentication."""
+    st.markdown("""
+    <style>
+        /* Center content for login page */
+        .stApp {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Ensure it takes full viewport height */
+            background-color: #f0f2f6; /* Light gray background */
+        }
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+        .login-card {
+            background-color: white;
+            padding: 3rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            max-width: 90%; /* Responsive width */
+            text-align: center;
+        }
+        .login-title {
+            color: #667eea;
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+        }
+        .stTextInput > div > div > input {
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            padding: 0.75rem;
+        }
+        .stButton > button {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+        .stAlert {
+            margin-top: 1rem;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="login-container"><div class="login-card">', unsafe_allow_html=True)
+    st.markdown('<h1 class="login-title">🔒 HomeoClinic AI Login</h1>', unsafe_allow_html=True)
+
+    username = st.text_input("Username", key="login_username")
+    password = st.text_input("Password", type="password", key="login_password")
+
+    if st.button("Login", key="login_button"):
+        # Retrieve credentials from Streamlit secrets
+        # Using direct access will raise KeyError if secrets are not configured, enforcing strictness
+        if username == st.secrets["APP_USERNAME"] and password == st.secrets["APP_PASSWORD"]:
+            st.session_state.authenticated = True
+            st.session_state.login_attempts = 0  # Reset attempts on success
+            st.rerun() # Rerun to clear login page and show main app
+        else:
+            st.session_state.login_attempts += 1
+            if st.session_state.login_attempts >= 3:
+                st.session_state.app_locked = True
+                st.error("Application locked due to too many failed login attempts.")
+                st.stop() # Stop execution immediately, no warning needed as per request
+            else:
+                st.error(f"Invalid username or password. Attempts left: {3 - st.session_state.login_attempts}")
+    
+    st.markdown('</div></div>', unsafe_allow_html=True)
+# --- END NEW ---
 
 # System prompt for the homeopathy doctor
 SYSTEM_PROMPT = """You are Dr. HomeoHeal, an experienced and compassionate homeopathic doctor with over 20 years of practice. Your approach is:
@@ -973,7 +1066,7 @@ def restore_chat_context():
             except:
                 pass  # Skip if there's an error
 
-def main():
+def main_app_content():
     """Main application function"""
     # Initialize session state
     initialize_session_state()
@@ -1088,11 +1181,20 @@ def display_memory_indicator():
         """.format(count=len(st.session_state.messages)), unsafe_allow_html=True)
 
 # Run the app
+# --- MODIFIED: Main execution block to include login ---
 if __name__ == "__main__":
-    # Show memory indicator
-    if 'messages' in st.session_state and len(st.session_state.messages) > 2:
-        with st.sidebar:
-            st.markdown("---")
-            display_memory_indicator()
-    
-    main()
+# The login-related session state variables are initialized at the top of the script.
+# The 'app_locked' check is also at the top.
+
+    if not st.session_state.authenticated:
+        login_page()
+    else:
+        # User is authenticated, proceed with the main application
+        # Show memory indicator (existing logic)
+        if 'messages' in st.session_state and len(st.session_state.messages) > 2:
+            with st.sidebar:
+                st.markdown("---")
+                display_memory_indicator()
+        
+        main_app_content()
+# --- END MODIFIED ---
