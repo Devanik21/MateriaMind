@@ -523,7 +523,7 @@ def login_page():
     """, unsafe_allow_html=True)
 
     if st.session_state.get('locked_out', False):
-        st.error("Too many failed login attempts. The application is locked. Please refresh your browser to try again.")
+        st.error("Application locked. Access denied.")
         st.stop()
 
     with st.form("login_form"):
@@ -547,7 +547,6 @@ def login_page():
                     st.session_state.login_attempts += 1
                     if st.session_state.login_attempts >= 3:
                         st.session_state.locked_out = True
-                    st.error("Incorrect password.")
                     time.sleep(1) 
                     st.rerun()
             except KeyError:
@@ -1138,7 +1137,7 @@ if __name__ == "__main__":
     initialize_session_state()
 
     if st.session_state.get('locked_out', False):
-        st.error("Too many failed login attempts. The application is locked. Please refresh your browser to try again.")
+        st.error("Application locked. Access denied.")
         st.stop()
 
     if not st.session_state.get('logged_in', False):
