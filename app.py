@@ -61,12 +61,14 @@ st.markdown("""
     }
     
     .user-message {
-        background-color: #e3f2fd;
+        background-color: black;
+        color: white;
         border-left: 4px solid #2196f3;
     }
     
     .assistant-message {
-        background-color: #f3e5f5;
+        background-color: black;
+        color: white;
         border-left: 4px solid #9c27b0;
     }
     
