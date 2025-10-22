@@ -107,6 +107,7 @@ st.markdown("""
     .prescription-card {
         background: black;
         color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Darker shadow for dark theme */
         padding: 2rem;
         border-radius: 15px;
         margin: 2rem 0;
@@ -165,7 +166,8 @@ st.markdown("""
     
     /* Sidebar styling */
     .css-1d391kg {
-        background-color: #f8f9fa;
+        background-color: #2a2a2a; /* Dark sidebar background */
+        color: #e0e0e0; /* Light text color for sidebar */
     }
     
     /* Statistics card */
@@ -178,6 +180,7 @@ st.markdown("""
         text-align: center;
     }
     
+    
     .stat-value {
         font-size: 2rem;
         font-weight: bold;
@@ -188,6 +191,38 @@ st.markdown("""
         color: #ccc;
         font-size: 0.9rem;
         margin-top: 0.5rem;
+    }
+
+    /* Ensure Streamlit's default text elements are readable in dark theme */
+    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown, .stSelectbox label, .stRadio label, .stCheckbox label {
+        color: #e0e0e0;
+    }
+
+    /* Streamlit input fields */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stSelectbox > div > div > div > div,
+    .stDateInput > div > div > input {
+        background-color: #3a3a3a;
+        color: #e0e0e0;
+        border: 1px solid #555;
+    }
+
+    /* Streamlit alerts */
+    .stAlert {
+        background-color: #3a3a3a;
+        color: #e0e0e0;
+        border-left: 4px solid; /* Will use Streamlit's default alert border color */
+    }
+
+    /* Expander styling in sidebar */
+    .stExpander {
+        background-color: #2a2a2a; /* Match sidebar background */
+        color: #e0e0e0;
+    }
+    .stExpander > div > div > button { /* Expander header button */
+        color: #e0e0e0;
+        background-color: #3a3a3a;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -210,7 +245,7 @@ def get_consultations_table():
     db = init_database()
     return db.table('consultations')
 
-def save_session_to_db(session_id: str, messages: List[Dict], patient_info: Dict, symptoms: List[str], current_prescription: Dict = None):
+def save_session_to_db(session_id: str, messages: List[Dict], patient_info: Dict, symptoms: List[str], current_prescription: Dict = None, loaded_from_db: bool = False):
     """Save current session to database"""
     sessions = get_sessions_table()
     session_data = {
@@ -220,6 +255,7 @@ def save_session_to_db(session_id: str, messages: List[Dict], patient_info: Dict
         'patient_info': patient_info,
         'symptoms_collected': symptoms,
         'last_updated': datetime.now().isoformat(),
+        'loaded_from_db': loaded_from_db, # Persist this flag
         'message_count': len(messages)
     }
     
@@ -305,6 +341,7 @@ def initialize_session_state():
             st.session_state.messages = saved_session.get('messages', [])
             st.session_state.patient_info = saved_session.get('patient_info', {})
             st.session_state.symptoms_collected = saved_session.get('symptoms_collected', [])
+            st.session_state.prescription_generated = saved_session.get('current_prescription', None) is not None
             st.session_state.current_prescription = saved_session.get('current_prescription', None)
 
 # Configure Gemini API
@@ -324,13 +361,11 @@ def login_page():
     st.markdown("""
     <style>
         /* Center content for login page */
-        .stApp {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh; /* Ensure it takes full viewport height */
-            background-color: #f0f2f6; /* Light gray background */
+        .stApp > header { /* Hide Streamlit header on login page */
+            visibility: hidden;
+        }
+        .stApp > div:first-child { /* Hide Streamlit sidebar on login page */
+            display: none;
         }
         .login-container {
             display: flex;
@@ -339,16 +374,17 @@ def login_page():
             width: 100%;
         }
         .login-card {
-            background-color: white;
+            background-color: #2a2a2a; /* Dark card background */
             padding: 3rem;
             border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Darker shadow */
             width: 400px;
             max-width: 90%; /* Responsive width */
             text-align: center;
         }
         .login-title {
-            color: #667eea;
+            color: #e0e0e0; /* Light title color */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Subtle shadow for contrast */
             font-size: 2.2rem;
             margin-bottom: 1.5rem;
         }
@@ -356,6 +392,8 @@ def login_page():
             border-radius: 5px;
             border: 1px solid #ccc;
             padding: 0.75rem;
+            background-color: #3a3a3a; /* Dark input background */
+            color: #e0e0e0; /* Light input text */
         }
         .stButton > button {
             width: 100%;
@@ -367,6 +405,8 @@ def login_page():
             font-size: 1.1rem;
             margin-top: 1rem;
         }
+        /* Ensure alert messages are readable */
+        .stAlert { background-color: #4a4a4a; color: #e0e0e0; }
         .stAlert {
             margin-top: 1rem;
         }
@@ -729,6 +769,7 @@ def display_sidebar():
                         st.session_state.patient_info = loaded.get('patient_info', {})
                         st.session_state.symptoms_collected = loaded.get('symptoms_collected', [])
                         st.session_state.current_prescription = loaded.get('current_prescription', None)
+                        # Set prescription_generated flag based on whether a prescription was loaded
                         st.session_state.prescription_generated = st.session_state.current_prescription is not None
                         st.session_state.chat_session = None
                         st.session_state.chat_model = None
