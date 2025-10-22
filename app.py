@@ -9,6 +9,8 @@ from io import StringIO
 import base64
 from tinydb import TinyDB, Query
 import os
+import hmac
+import time
 
 # Page configuration
 st.set_page_config(
@@ -285,6 +287,13 @@ def initialize_session_state():
     if 'chat_session' not in st.session_state:
         st.session_state.chat_session = None
     
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+    if 'login_attempts' not in st.session_state:
+        st.session_state.login_attempts = 0
+    if 'locked_out' not in st.session_state:
+        st.session_state.locked_out = False
+    
     # Load from database if exists
     if 'loaded_from_db' not in st.session_state:
         saved_session = load_session_from_db(st.session_state.session_id)
@@ -503,6 +512,46 @@ def create_download_link(text: str, filename: str) -> str:
     """Create download link for text content"""
     b64 = base64.b64encode(text.encode()).decode()
     return f'<a href="data:text/markdown;base64,{b64}" download="{filename}" style="text-decoration: none;"><button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.5rem 2rem; border-radius: 25px; font-weight: bold; cursor: pointer;">📥 Download Prescription</button></a>'
+
+def login_page():
+    """Displays the login page and handles authentication."""
+    st.markdown("""
+    <div class="header-container">
+        <h1 class="header-title">🌿 HomeoClinic AI</h1>
+        <p class="header-subtitle">Login Required</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.session_state.get('locked_out', False):
+        st.error("Too many failed login attempts. The application is locked. Please refresh your browser to try again.")
+        st.stop()
+
+    with st.form("login_form"):
+        st.markdown("<h3 style='text-align: center; color: white;'>Enter Password to Continue</h3>", unsafe_allow_html=True)
+        password = st.text_input(
+            "Password", 
+            type="password", 
+            label_visibility="collapsed", 
+            placeholder="Enter password"
+        )
+        submitted = st.form_submit_button("Login", use_container_width=True)
+
+        if submitted:
+            try:
+                correct_password = st.secrets["PASSWORD"]
+                # Securely compare passwords to prevent timing attacks
+                if hmac.compare_digest(password.encode(), correct_password.encode()):
+                    st.session_state.logged_in = True
+                    st.rerun()
+                else:
+                    st.session_state.login_attempts += 1
+                    if st.session_state.login_attempts >= 3:
+                        st.session_state.locked_out = True
+                    st.error("Incorrect password.")
+                    time.sleep(1) 
+                    st.rerun()
+            except KeyError:
+                st.error("Application is not configured correctly. Password secret is missing.")
 
 def display_chat_message(message: Dict):
     """Display a chat message with appropriate styling"""
@@ -975,9 +1024,6 @@ def restore_chat_context():
 
 def main():
     """Main application function"""
-    # Initialize session state
-    initialize_session_state()
-    
     # Configure Gemini
     if not configure_gemini():
         st.error("⚠️ Unable to configure AI. Please check your API key in Streamlit secrets.")
@@ -1089,10 +1135,19 @@ def display_memory_indicator():
 
 # Run the app
 if __name__ == "__main__":
-    # Show memory indicator
-    if 'messages' in st.session_state and len(st.session_state.messages) > 2:
-        with st.sidebar:
-            st.markdown("---")
-            display_memory_indicator()
-    
-    main()
+    initialize_session_state()
+
+    if st.session_state.get('locked_out', False):
+        st.error("Too many failed login attempts. The application is locked. Please refresh your browser to try again.")
+        st.stop()
+
+    if not st.session_state.get('logged_in', False):
+        login_page()
+    else:
+        # Show memory indicator
+        if 'messages' in st.session_state and len(st.session_state.messages) > 2:
+            with st.sidebar:
+                st.markdown("---")
+                display_memory_indicator()
+        
+        main()
