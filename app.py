@@ -71,7 +71,8 @@ st.markdown("""
     }
     
     .system-message {
-        background-color: #fff3e0;
+        background-color: black;
+        color: white;
         border-left: 4px solid #ff9800;
     }
     
@@ -122,7 +123,8 @@ st.markdown("""
     
     /* Info box styling */
     .info-box {
-        background-color: #e8f5e9;
+        background-color: black;
+        color: white;
         padding: 1rem;
         border-radius: 10px;
         border-left: 4px solid #4caf50;
@@ -130,7 +132,8 @@ st.markdown("""
     }
     
     .warning-box {
-        background-color: #fff3cd;
+        background-color: black;
+        color: white;
         padding: 1rem;
         border-radius: 10px;
         border-left: 4px solid #ffc107;
