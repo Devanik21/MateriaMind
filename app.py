@@ -291,7 +291,7 @@ def initialize_session_state():
             st.session_state.messages = saved_session.get('messages', [])
             st.session_state.patient_info = saved_session.get('patient_info', {})
             st.session_state.symptoms_collected = saved_session.get('symptoms_collected', [])
-        st.session_state.loaded_from_db = True
+            st.session_state.current_prescription = saved_session.get('current_prescription', None)
 
 # Configure Gemini API
 def configure_gemini():
