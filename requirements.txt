@@ -6,3 +6,4 @@ gTTS
 markdown2 
 weasyprint
 PyPDF2
+tabulate
