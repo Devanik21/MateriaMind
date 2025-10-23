@@ -5,3 +5,4 @@ tinydb
 gTTS
 markdown2 
 weasyprint
+PyPDF2
