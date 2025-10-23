@@ -733,8 +733,8 @@ def login_page():
             except KeyError:
                 st.error("Application is not configured correctly. Password secret is missing.")
 
-def display_chat_message(message: Dict):
-    """Display a chat message with appropriate styling"""
+def display_chat_message(message: Dict, message_key: int):
+    """Display a chat message with appropriate styling and on-demand audio."""
     role = message["role"]
     content = message["content"]
     
@@ -752,11 +752,23 @@ def display_chat_message(message: Dict):
             <div class="message-content">{content}</div>
         </div>
         """, unsafe_allow_html=True)
-        # Add audio player for assistant's messages
-        with st.spinner("🎤 Generating audio..."):
-            audio_bytes = text_to_speech(content)
-        if audio_bytes:
-            st.audio(audio_bytes, format="audio/mp3")
+        
+        # Create columns for a button and an ephemeral audio player
+        button_col, audio_col = st.columns([1, 15])
+
+        with button_col:
+            # A unique key is crucial for each button in the loop
+            button_clicked = st.button("🔊", key=f"tts_{message_key}", help="Listen to this message")
+        
+        with audio_col:
+            # This placeholder will temporarily hold the audio player
+            audio_placeholder = st.empty()
+
+        if button_clicked:
+            with st.spinner("🎤 Generating audio..."):
+                audio_bytes = text_to_speech(content)
+            if audio_bytes:
+                audio_placeholder.audio(audio_bytes, format="audio/mp3", autoplay=True)
 
     else:
         st.markdown(f"""
@@ -1262,8 +1274,8 @@ def main():
     display_welcome_message()
     
     # Display chat messages
-    for message in st.session_state.messages:
-        display_chat_message(message)
+    for i, message in enumerate(st.session_state.messages):
+        display_chat_message(message, i)
     
     # Display prescription if generated
     if st.session_state.prescription_generated and st.session_state.current_prescription:
