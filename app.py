@@ -379,7 +379,7 @@ Remember: You're here to help through homeopathy, but always prioritize patient 
 def initialize_chat_model():
     """Initialize the chat model and start a persistent chat session"""
     if st.session_state.chat_model is None:
-        st.session_state.chat_model = genai.GenerativeModel('gemma-3n-e4b-it')
+        st.session_state.chat_model = genai.GenerativeModel('gemma-3-27b-it')
         
         # Start chat with system prompt
         st.session_state.chat_session = st.session_state.chat_model.start_chat(
