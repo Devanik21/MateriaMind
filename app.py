@@ -287,6 +287,9 @@ def initialize_session_state():
     if 'chat_session' not in st.session_state:
         st.session_state.chat_session = None
     
+    if 'processed_files' not in st.session_state:
+        st.session_state.processed_files = set()
+    
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
     if 'login_attempts' not in st.session_state:
@@ -740,6 +743,7 @@ def display_sidebar():
                 st.session_state.patient_info = {}
                 st.session_state.chat_session = None
                 st.session_state.chat_model = None
+                st.session_state.processed_files = set()
                 st.rerun()
         
         # Load previous sessions
@@ -762,6 +766,7 @@ def display_sidebar():
                         st.session_state.prescription_generated = st.session_state.current_prescription is not None
                         st.session_state.chat_session = None
                         st.session_state.chat_model = None
+                        st.session_state.processed_files = set()
                         st.success(f"Loaded session: {session_id}")
                         st.rerun()
         
@@ -1142,23 +1147,63 @@ def main():
         st.markdown("### 💬 Continue Conversation")
         st.info("You can ask follow-up questions about the prescription or start a new consultation using the sidebar.")
     
+    # File uploader for images, reports, etc.
+    uploaded_files = st.file_uploader(
+        "You can upload files (images, PDFs) for Dr. Elysian to consider.",
+        type=["jpg", "jpeg", "png", "pdf"],
+        accept_multiple_files=True,
+        key="file_uploader"
+    )
+
     # Chat input
     user_input = st.chat_input("Describe your symptoms or ask a question...")
     
+    # Process file uploads first, as they are a form of user input that triggers a rerun
+    if uploaded_files:
+        if 'processed_files' not in st.session_state:
+            st.session_state.processed_files = set()
+
+        new_files_to_process = [f for f in uploaded_files if f.file_id not in st.session_state.processed_files]
+
+        if new_files_to_process:
+            # We will handle only one batch of new files at a time and then rerun
+            file_names = []
+            # Display a preview for the user immediately
+            with st.chat_message("user", avatar="👤"):
+                for uploaded_file in new_files_to_process:
+                    st.session_state.processed_files.add(uploaded_file.file_id)
+                    file_names.append(uploaded_file.name)
+                    if "image" in uploaded_file.type:
+                        st.image(uploaded_file, caption=f"Uploaded: {uploaded_file.name}", width=300)
+                    else:
+                        st.write(f"📄 Uploaded file: {uploaded_file.name}")
+
+            # Create a single message for the AI about all newly uploaded files
+            upload_message_for_ai = f"I have just uploaded {len(file_names)} file(s): {', '.join(file_names)}. Please acknowledge this and ask me to describe them if necessary for the consultation."
+            
+            # Add a user message to the history for display
+            st.session_state.messages.append({
+                "role": "user",
+                "content": f"Uploaded {len(file_names)} file(s): {', '.join(file_names)}"
+            })
+            st.session_state.total_messages += 1
+            
+            # Get AI response
+            with st.spinner("🩺 Dr. Elysian is reviewing the file(s)..."):
+                response = get_ai_response(upload_message_for_ai)
+                process_ai_response(response)
+            
+            # Auto-save and rerun
+            save_session_to_db(st.session_state.session_id, st.session_state.messages, st.session_state.patient_info, st.session_state.symptoms_collected, st.session_state.current_prescription)
+            st.rerun()
+
     if user_input:
         # Add user message
-        st.session_state.messages.append({
-            "role": "user",
-            "content": user_input
-        })
+        st.session_state.messages.append({"role": "user", "content": user_input})
         st.session_state.total_messages += 1
         
         # Extract symptoms (simple keyword extraction)
-        symptom_keywords = ['pain', 'ache', 'fever', 'cough', 'cold', 'headache', 
-                           'nausea', 'vomit', 'diarrhea', 'constipation', 'anxiety', 
-                           'stress', 'insomnia', 'fatigue', 'weakness', 'dizzy',
-                           'swelling', 'rash', 'itch', 'burn', 'cramp', 'sore',
-                           'inflammation', 'infection', 'allergy', 'bleeding']
+        symptom_keywords = ['pain', 'ache', 'fever', 'cough', 'cold', 'headache', 'nausea', 'vomit', 'diarrhea', 'constipation', 'anxiety', 'stress', 'insomnia', 'fatigue', 'weakness', 'dizzy', 'swelling', 'rash', 'itch', 'burn', 'cramp', 'sore', 'inflammation', 'infection', 'allergy', 'bleeding']
         
         for keyword in symptom_keywords:
             if keyword in user_input.lower() and keyword not in st.session_state.symptoms_collected:
@@ -1170,13 +1215,7 @@ def main():
             process_ai_response(response)
         
         # Auto-save after interaction
-        save_session_to_db(
-            st.session_state.session_id,
-            st.session_state.messages,
-            st.session_state.patient_info,
-            st.session_state.symptoms_collected,
-            st.session_state.current_prescription
-        )
+        save_session_to_db(st.session_state.session_id, st.session_state.messages, st.session_state.patient_info, st.session_state.symptoms_collected, st.session_state.current_prescription)
         
         # Rerun to display new messages
         st.rerun()
