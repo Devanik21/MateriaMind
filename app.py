@@ -1248,8 +1248,8 @@ def main():
     
     # File uploader for images, reports, etc.
     uploaded_files = st.file_uploader(
-        "You can upload files (images, PDFs) for Dr. Elysian to consider.",
-        type=["jpg", "jpeg", "png", "pdf"],
+        "You can upload any relevant files (images, reports, documents) for Dr. Elysian to consider.",
+        type=["jpg", "jpeg", "png", "gif", "bmp", "pdf", "doc", "docx", "txt", "rtf", "odt"],
         accept_multiple_files=True,
         key="file_uploader"
     )
