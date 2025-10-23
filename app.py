@@ -79,20 +79,24 @@ def set_page_background_and_style(file_path):
     
     /* Dataframe (Prescription Table) transparency */
     /* Dataframe (Prescription Table) Styling */
-[data-testid="stDataFrame"], .dvn-root, .dvn-header, .dvn-header-row {{
-    background: transparent !important; /* Keep container/header transparent */
-    backdrop-filter: none !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: rgba(220, 220, 220, 0.9) !important; /* Header text */
-}}
+/* Dataframe (Prescription Table) Styling */
+    [data-testid="stDataFrame"], .dvn-root {{
+        background: transparent !important; /* Keep main container transparent */
+        border: none !important;
+    }}
 
-.dvn-cell, .dvn-bg-cell {{
-    background: rgba(30, 30, 30, 0.7) !important;  /* FIX: Use a semi-transparent dark bg */
-    color: rgba(230, 230, 230, 0.95) !important; /* FIX: Force light text */
-    border: none !important;
-    box-shadow: none !important;
-}}
+    .dvn-header, .dvn-header-row {{
+        background: transparent !important; /* Keep header row transparent */
+        color: rgba(220, 220, 220, 0.9) !important; /* Light header text */
+        border: none !important;
+    }}
+    
+    .dvn-cell, .dvn-bg-cell {{
+        background: #000000 !important;  /* FIX: Solid black background */
+        color: #FFFFFF !important;       /* FIX: Solid white text */
+        border: 1px solid rgba(50, 50, 50, 0.5) !important; /* Optional: faint border */
+        box-shadow: none !important;
+    }}
     
     /* Remove all borders from sidebar */
     [data-testid="stSidebar"] {{
