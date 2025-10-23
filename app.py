@@ -77,6 +77,14 @@ def set_page_background_and_style(file_path):
         box-shadow: none !important;
     }}
     
+    /* Dataframe (Prescription Table) transparency */
+    [data-testid="stDataFrame"], .dvn-root, .dvn-header, .dvn-header-row, .dvn-cell, .dvn-bg-cell {{
+        background: transparent !important;
+        backdrop-filter: none !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    
     /* Remove all borders from sidebar */
     [data-testid="stSidebar"] {{
         border-right: none !important;
@@ -280,7 +288,7 @@ def extract_text_from_pdf(pdf_file):
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
 
-set_page_background_and_style("black_hole (1) (1).png")
+set_page_background_and_style("k12.jpg")
 
 # Database setup
 DB_PATH = "homeo_clinic.json"
