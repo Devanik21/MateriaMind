@@ -665,23 +665,29 @@ def display_chat_message(message: Dict):
         st.markdown(f"""
         <div class="chat-message user-message">
             <div class="message-role">👤 You</div>
-            <div class="message-content">{content}</div>
-            {audio_player_html}
+            <div class="message-content">
+                {content}
+                {audio_player_html}
+            </div>
         </div>
         """, unsafe_allow_html=True)
     elif role == "assistant":
         st.markdown(f"""
         <div class="chat-message assistant-message">
             <div class="message-role">🩺 Dr. Elysian</div>
-            <div class="message-content">{content}</div>
-            {audio_player_html}
+            <div class="message-content">
+                {content}
+                {audio_player_html}
+            </div>
         </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
         <div class="chat-message system-message">
             <div class="message-role">ℹ️ System</div>
-            <div class="message-content">{content}</div>
+            <div class="message-content">
+                {content}
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
