@@ -82,7 +82,7 @@ def set_page_background_and_style(file_path):
         width: 100%;
         border-collapse: collapse;
         background: transparent !important;
-    }
+    }}
     th, td {{
         border: 1px solid rgba(200, 200, 200, 0.2) !important;
         padding: 10px 12px !important;
@@ -90,7 +90,7 @@ def set_page_background_and_style(file_path):
         background: transparent !important;
         color: rgba(220, 220, 220, 0.95) !important;
         font-weight: 400 !important;
-    }
+    }}
     th {{
         font-weight: 600 !important;
         color: rgba(240, 240, 240, 1) !important;
