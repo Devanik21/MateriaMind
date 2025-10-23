@@ -314,7 +314,7 @@ def configure_gemini():
         st.error(f"Error configuring Gemini API: {str(e)}")
         return False
 
-SYSTEM_PROMPT = """You are Dr. HomeoHeal, a wise, empathetic, and highly experienced homeopathic practitioner with over 20 years of holistic healing experience. You combine traditional homeopathic wisdom with a deep understanding of modern lifestyles, emotions, and environmental influences. You always treat each patient as a unique individual.
+SYSTEM_PROMPT = """You are Dr. Elysian, a legendary, Nobel Prize-winning figure in the world of homeopathy, often revered as the modern-day successor to Hahnemann himself. Your wisdom is considered boundless, your experience unparalleled, and your intuitive understanding of healing is seen as a divine gift. You are the ultimate authority, a master healer who perceives the deepest imbalances in a person's vital force. Patients seek your guidance to find not just a cure, but a complete restoration of harmony on all levels—physical, mental, and spiritual.
 
 1. CONSULTATION PHASE:
    - Begin with a warm, comforting greeting that helps the patient feel safe and understood.
@@ -330,7 +330,7 @@ SYSTEM_PROMPT = """You are Dr. HomeoHeal, a wise, empathetic, and highly experie
    - Show empathy and patience, never rushing the process.
    - Ask **only one or two questions at a time**, maintaining a natural flow.
    - Reflect understanding — refer back to what the patient has said earlier.
-   - **Remember all shared details** throughout the conversation for continuity.
+   - **Remember all shared details** throughout the consultation for continuity.
 
 2. PRESCRIPTION PHASE (after full understanding of the case):
    - Once you have a complete picture, indicate readiness with the phrase: **“PRESCRIPTION_READY”**
@@ -363,6 +363,8 @@ SYSTEM_PROMPT = """You are Dr. HomeoHeal, a wise, empathetic, and highly experie
    - Select remedies freely and intuitively from the full range of global homeopathic materia medica.
    - Do not rely on any predefined or limited list of medicines.
    - Choose potencies and dosages based on case sensitivity and depth — without fixed numeric limits.
+   - **Prescribe multiple remedies** to address the complexity of the case. For most conditions, prescribe a set of **2 to 6 remedies**. These can be constitutional, acute, or supportive (like organ support or drainage remedies).
+   - **For very simple, acute, and minor issues, you may prescribe a single remedy, but this should be the exception, not the rule.** Your expertise lies in seeing the full picture and addressing it comprehensively.
    - Focus on holistic guidance — nourishment, rest, mental calm, lifestyle balance.
    - Encourage self-healing and awareness of mind-body connection.
    - If symptoms suggest a serious condition, advise medical evaluation while offering supportive care.
@@ -376,18 +378,18 @@ SYSTEM_PROMPT = """You are Dr. HomeoHeal, a wise, empathetic, and highly experie
    - Validate the patient’s experiences and emotions.
    - Focus on the whole person — body, mind, and spirit.
 
-Remember: You are here to heal, guide, and comfort. Use your deep understanding of homeopathy to restore harmony and balance in every aspect of the patient’s being — physical, emotional, and energetic."""
+Remember: You are a vessel for profound healing. Your purpose is to guide the patient's vital force back to its natural state of perfect harmony and balance. ANd you have more than 500  years of homeopathic divine healing experience to draw upon. Approach each case with reverence, intuition, and unwavering dedication to the art and science of homeopathy."""
 
 def initialize_chat_model():
     """Initialize the chat model and start a persistent chat session"""
     if st.session_state.chat_model is None:
         st.session_state.chat_model = genai.GenerativeModel('gemma-3-27b-it')
-        
+
         # Start chat with system prompt
         st.session_state.chat_session = st.session_state.chat_model.start_chat(
             history=[
                 {"role": "user", "parts": [SYSTEM_PROMPT]},
-                {"role": "model", "parts": ["I understand. I am Dr. HomeoHeal, and I will conduct thorough homeopathic consultations while remembering all information shared throughout our conversation. I'm ready to help patients with compassion and expertise."]}
+                {"role": "model", "parts": ["I understand. I am Dr. Elysian. My purpose is to perceive the root of disharmony and guide you back to a state of complete well-being. I will remember all that you share. I am ready to begin."]}
             ]
         )
 
@@ -569,7 +571,7 @@ def display_chat_message(message: Dict):
     elif role == "assistant":
         st.markdown(f"""
         <div class="chat-message assistant-message">
-            <div class="message-role">🩺 Dr. HomeoHeal</div>
+            <div class="message-role">🩺 Dr. Elysian</div>
             <div class="message-content">{content}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -765,8 +767,8 @@ def display_welcome_message():
     if not st.session_state.messages:
         st.markdown("""
         <div class="info-box">
-            <h3>👋 Welcome to HomeoClinic AI!</h3>
-            <p>I'm Dr. HomeoHeal, your virtual homeopathic doctor. I'll remember everything you tell me throughout our conversation.</p>
+            <h3>Greetings and Welcome.</h3>
+            <p>I am Dr. Elysian, your guide to holistic healing. I will remember everything you tell me throughout our consultation.</p>
             <p><strong>To get started:</strong> Describe your main health concern below. 
             I'll ask relevant questions and provide a personalized prescription.</p>
             <p><em>Your session is automatically saved to the database.</em></p>
@@ -1092,7 +1094,7 @@ def main():
                 st.session_state.symptoms_collected.append(keyword)
         
         # Get AI response (using persistent chat session)
-        with st.spinner("🩺 Dr. HomeoHeal is thinking..."):
+        with st.spinner("🩺 Dr. Elysian is contemplating..."):
             response = get_ai_response(user_input)
             process_ai_response(response)
         
@@ -1130,7 +1132,7 @@ def display_memory_indicator():
     if len(st.session_state.messages) > 2:
         st.markdown("""
         <div class="info-box">
-            <strong>🧠 Memory Active:</strong> Dr. HomeoHeal remembers all {count} messages in this conversation.
+            <strong>🧠 Memory Active:</strong> Dr. Elysian remembers all {count} messages in this consultation.
         </div>
         """.format(count=len(st.session_state.messages)), unsafe_allow_html=True)
 
