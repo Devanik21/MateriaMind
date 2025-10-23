@@ -78,12 +78,12 @@ def set_page_background_and_style(file_path):
     }}
     
     /* Markdown Table (for Prescriptions) */
-    table {
+    table {{
         width: 100%;
         border-collapse: collapse;
         background: transparent !important;
     }
-    th, td {
+    th, td {{
         border: 1px solid rgba(200, 200, 200, 0.2) !important;
         padding: 10px 12px !important;
         text-align: left !important;
@@ -91,10 +91,10 @@ def set_page_background_and_style(file_path):
         color: rgba(220, 220, 220, 0.95) !important;
         font-weight: 400 !important;
     }
-    th {
+    th {{
         font-weight: 600 !important;
         color: rgba(240, 240, 240, 1) !important;
-    } /* End of Markdown Table (for Prescriptions) */
+    }} /* End of Markdown Table (for Prescriptions) */
     
     /* Remove all borders from sidebar */
     [data-testid="stSidebar"] {{
