@@ -12,6 +12,9 @@ import os
 import hmac
 import time
 
+import markdown2
+from weasyprint import HTML
+
 # Page configuration
 st.set_page_config(
     page_title="HomeoClinic AI - Your Virtual Homeopathy Doctor",
@@ -586,10 +589,89 @@ def generate_prescription_markdown(prescription: Dict) -> str:
     
     return md
 
-def create_download_link(text: str, filename: str) -> str:
-    """Create download link for text content"""
-    b64 = base64.b64encode(text.encode()).decode()
-    return f'<a href="data:text/markdown;base64,{b64}" download="{filename}" style="text-decoration: none;"><button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.5rem 2rem; border-radius: 25px; font-weight: bold; cursor: pointer;">📥 Download Prescription</button></a>'
+def generate_prescription_pdf(prescription: Dict) -> bytes:
+    """Generate a beautiful PDF prescription from the markdown content."""
+    md_content = generate_prescription_markdown(prescription)
+
+    # Convert markdown to HTML
+    # Using extras for better table and code block rendering if they were ever in the markdown
+    html_body = markdown2.markdown(md_content, extras=["fenced-code-blocks", "tables"])
+
+    # Embed CSS for styling the PDF
+    # Taking inspiration from the existing CSS for consistency and adding print-specific styles
+    pdf_css = """
+    <style>
+        @page { size: A4; margin: 1cm; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; font-size: 11pt; }
+        h1, h2, h3, h4, h5, h6 { color: #667eea; margin-top: 1.5em; margin-bottom: 0.5em; page-break-after: avoid; }
+        h1 { font-size: 2.2em; text-align: center; border-bottom: 2px solid #764ba2; padding-bottom: 0.5em; color: #764ba2; }
+        h2 { font-size: 1.8em; color: #764ba2; }
+        h3 { font-size: 1.4em; color: #667eea; }
+        p { margin-bottom: 1em; }
+        ul { list-style-type: disc; margin-left: 20px; margin-bottom: 1em; }
+        li { margin-bottom: 0.5em; }
+        strong { font-weight: bold; }
+        em { font-style: italic; }
+        .prescription-card {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .prescription-header {
+            text-align: center;
+            color: #667eea;
+            border-bottom: 2px solid #764ba2;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+            page-break-inside: auto;
+        }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+            font-weight: bold;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1em;
+            margin: 1em 0;
+            border-radius: 4px;
+            color: #856404;
+        }
+        .info-box {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 1em;
+            margin: 1em 0;
+            border-radius: 4px;
+            color: #155724;
+        }
+        a { color: #667eea; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+    """
+
+    # Combine CSS and HTML content
+    final_html = f"<!DOCTYPE html><html><head><meta charset='utf-8'>{pdf_css}</head><body>{html_body}</body></html>"
+
+    # Generate PDF
+    pdf_bytes = HTML(string=final_html).write_pdf()
+    return pdf_bytes
 
 def login_page():
     """Displays the login page and handles authentication."""
@@ -961,37 +1043,54 @@ def display_prescription(prescription: Dict):
     # Download section
     st.markdown("### 📥 Download Your Prescription")
     
-    col1, col2, col3 = st.columns(3)
+    # Use st.download_button directly instead of create_download_link for better Streamlit integration
+    col1, col2, col3, col4 = st.columns(4) # Added one more column for PDF
     
     with col1:
-        # Markdown download
         md_content = generate_prescription_markdown(prescription)
-        st.markdown(
-            create_download_link(
-                md_content,
-                f"prescription_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-            ),
-            unsafe_allow_html=True
+        st.download_button(
+            label="📥 Download MD",
+            data=md_content,
+            file_name=f"prescription_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+            mime="text/markdown",
+            key="download_md",
+            use_container_width=True
         )
     
     with col2:
-        # JSON download
         json_content = json.dumps(prescription, indent=2)
-        b64 = base64.b64encode(json_content.encode()).decode()
-        st.markdown(
-            f'<a href="data:application/json;base64,{b64}" download="prescription_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json" style="text-decoration: none;"><button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.5rem 2rem; border-radius: 25px; font-weight: bold; cursor: pointer;">📥 Download JSON</button></a>',
-            unsafe_allow_html=True
+        st.download_button(
+            label="📥 Download JSON",
+            data=json_content,
+            file_name=f"prescription_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+            mime="application/json",
+            key="download_json",
+            use_container_width=True
         )
     
     with col3:
-        # CSV download (remedies only)
         csv_buffer = StringIO()
         df.to_csv(csv_buffer, index=False)
         csv_content = csv_buffer.getvalue()
-        b64_csv = base64.b64encode(csv_content.encode()).decode()
-        st.markdown(
-            f'<a href="data:text/csv;base64,{b64_csv}" download="prescription_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv" style="text-decoration: none;"><button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.5rem 2rem; border-radius: 25px; font-weight: bold; cursor: pointer;">📥 Download CSV</button></a>',
-            unsafe_allow_html=True
+        st.download_button(
+            label="📥 Download CSV",
+            data=csv_content,
+            file_name=f"prescription_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv",
+            key="download_csv",
+            use_container_width=True
+        )
+
+    with col4:
+        # Generate PDF bytes
+        pdf_bytes = generate_prescription_pdf(prescription)
+        st.download_button(
+            label="📥 Download PDF",
+            data=pdf_bytes,
+            file_name=f"prescription_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            mime="application/pdf",
+            key="download_pdf",
+            use_container_width=True
         )
     
     # Disclaimer
