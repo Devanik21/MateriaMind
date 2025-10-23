@@ -625,7 +625,9 @@ def format_prescription_table(prescription: Dict) -> pd.DataFrame:
             'Potency': remedy.get('potency', ''),
             'Dosage': remedy.get('dosage', ''),
             'Instructions': remedy.get('instructions', ''),
-            'Purpose': remedy.get('purpose', '')
+            'Purpose': remedy.get('purpose', ''),
+            'Keynote Match': remedy.get('keynote_match', ''), # New column
+            'Sphere of Action': remedy.get('sphere_of_action', '') # New column (placeholder for future AI output)
         })
     
     return pd.DataFrame(df_data)
@@ -658,6 +660,8 @@ def generate_prescription_markdown(prescription: Dict) -> str:
 
 - **Dosage**: {remedy.get('dosage', '')}
 - **Instructions**: {remedy.get('instructions', '')}
+- **Keynote Match**: {remedy.get('keynote_match', 'N/A')}
+- **Sphere of Action**: {remedy.get('sphere_of_action', 'N/A')}
 - **Purpose**: {remedy.get('purpose', '')}
 
 """
