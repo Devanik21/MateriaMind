@@ -174,6 +174,24 @@ def set_page_background_and_style(file_path):
         box-shadow: none !important;
     }}
     
+    /* Custom Chat Message Formatting */
+    .chat-message {
+        margin-bottom: 1.5rem !important; /* Increased vertical spacing */
+    }
+    .message-role {
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        color: rgba(240, 240, 240, 0.95) !important; /* Brighter color for role */
+        margin-bottom: 0.5rem !important;
+        display: block;
+    }
+    .message-content {
+        line-height: 1.6 !important;
+        padding-left: 1.5rem; /* Indent content under role */
+        border-left: 2px solid rgba(200, 200, 200, 0.15); /* Subtle left border for structure */
+        color: rgba(210, 210, 210, 0.95) !important;
+    }
+
     /* File badges - pure transparent */
     .file-badge {{
         display: inline-block;
