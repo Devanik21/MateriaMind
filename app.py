@@ -77,25 +77,23 @@ def set_page_background_and_style(file_path):
         box-shadow: none !important;
     }}
     
-    /* Dataframe (Prescription Table) transparency */
-    /* Dataframe (Prescription Table) Styling */
-/* Dataframe (Prescription Table) Styling */
-    [data-testid="stDataFrame"], .dvn-root {{
-        background: transparent !important; /* Keep main container transparent */
-        border: none !important;
-    }}
-
-    .dvn-header, .dvn-header-row {{
-        background: transparent !important; /* Keep header row transparent */
-        color: rgba(220, 220, 220, 0.9) !important; /* Light header text */
-        border: none !important;
-    }}
-    
-    .dvn-cell, .dvn-bg-cell {{
-        background: #000000 !important;  /* FIX: Solid black background */
-        color: #FFFFFF !important;       /* FIX: Solid white text */
-        border: 1px solid rgba(50, 50, 50, 0.5) !important; /* Optional: faint border */
-        box-shadow: none !important;
+    /* Markdown Table (for Prescriptions) */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: transparent !important;
+    }
+    th, td {
+        border: 1px solid rgba(200, 200, 200, 0.2) !important;
+        padding: 10px 12px !important;
+        text-align: left !important;
+        background: transparent !important;
+        color: rgba(220, 220, 220, 0.95) !important;
+        font-weight: 400 !important;
+    }
+    th {
+        font-weight: 600 !important;
+        color: rgba(240, 240, 240, 1) !important;
     }}
     
     /* Remove all borders from sidebar */
@@ -301,7 +299,7 @@ def extract_text_from_pdf(pdf_file):
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
 
-set_page_background_and_style("black_hole (1) (1).png")
+set_page_background_and_style("k12.jpg")
 
 # Database setup
 DB_PATH = "homeo_clinic.json"
@@ -1160,21 +1158,9 @@ def display_prescription(prescription: Dict):
     # Remedies table
     st.markdown("### 💊 Prescribed Remedies")
     df = format_prescription_table(prescription)
-    
-    # Display table with custom styling
-    st.dataframe(
-        df,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "S.No": st.column_config.NumberColumn("S.No", width="small"),
-            "Medicine": st.column_config.TextColumn("Medicine", width="medium"),
-            "Potency": st.column_config.TextColumn("Potency", width="small"),
-            "Dosage": st.column_config.TextColumn("Dosage", width="medium"),
-            "Instructions": st.column_config.TextColumn("Instructions", width="large"),
-            "Purpose": st.column_config.TextColumn("Purpose", width="large")
-        }
-    )
+
+    # Display table as a markdown text table
+    st.markdown(df.to_markdown(index=False), unsafe_allow_html=True)
     
     # Additional sections in columns
     col1, col2 = st.columns(2)
