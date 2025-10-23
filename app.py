@@ -37,9 +37,9 @@ def set_page_background_and_style(file_path):
     if not os.path.exists(file_path):
         st.error(f"Error: Background image not found at '{file_path}'.")
         return
-    
+
     base64_img = get_base64_of_bin_file(file_path)
-    
+
     css_text = f'''
     <style>
     .stApp {{
@@ -49,7 +49,7 @@ def set_page_background_and_style(file_path):
         background-repeat: no-repeat;
         background-attachment: fixed;
     }}
-    
+
     /* 100% Pure Transparency - No boxes, no borders */
     [data-testid="stHeader"],
     [data-testid="stSidebar"],
@@ -76,7 +76,7 @@ def set_page_background_and_style(file_path):
         border: none !important;
         box-shadow: none !important;
     }}
-    
+
     /* Markdown Table (for Prescriptions) */
     table {{
         width: 100%;
@@ -95,12 +95,12 @@ def set_page_background_and_style(file_path):
         font-weight: 600 !important;
         color: rgba(240, 240, 240, 1) !important;
     }} /* End of Markdown Table (for Prescriptions) */
-    
+
     /* Remove all borders from sidebar */
     [data-testid="stSidebar"] {{
         border-right: none !important;
     }}
-    
+
     /* Pure transparent inputs - no borders */
     textarea, input {{
         background: transparent !important;
@@ -109,7 +109,7 @@ def set_page_background_and_style(file_path):
         transition: all 0.3s ease !important;
         box-shadow: none !important;
     }}
-    
+
     textarea:hover, input:hover,
     textarea:focus, input:focus {{
         background: transparent !important;
@@ -117,7 +117,7 @@ def set_page_background_and_style(file_path):
         box-shadow: none !important;
         color: rgba(220, 220, 220, 1) !important;
     }}
-    
+
     /* Pure transparent buttons - no borders */
     button {{
         background: transparent !important;
@@ -126,7 +126,7 @@ def set_page_background_and_style(file_path):
         transition: all 0.3s ease !important;
         box-shadow: none !important;
     }}
-    
+
     button:hover {{
         background: transparent !important;
         border: none !important;
@@ -134,24 +134,24 @@ def set_page_background_and_style(file_path):
         color: rgba(240, 240, 240, 1) !important;
         transform: none !important;
     }}
-    
+
     /* Gray-white text throughout */
     body, h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown {{
         color: rgba(200, 200, 200, 0.9) !important;
         font-family: 'Inter', -apple-system, system-ui, sans-serif;
     }}
-    
+
     h1, h2, h3 {{
         font-weight: 300 !important;
         text-align: center;
         letter-spacing: 2px;
     }}
-    
+
     h1 {{
         font-size: 3rem !important;
         color: rgba(220, 220, 220, 0.95) !important;
     }}
-    
+
     .subtitle {{
         color: rgba(180, 180, 180, 0.8);
         font-size: 1.1rem;
@@ -159,7 +159,7 @@ def set_page_background_and_style(file_path):
         letter-spacing: 3px;
         font-weight: 300;
     }}
-    
+
     /* Transparent chat messages - no borders */
     .stChatMessage {{
         background: transparent !important;
@@ -167,30 +167,30 @@ def set_page_background_and_style(file_path):
         padding-left: 0px !important;
         margin: 8px 0 !important;
     }}
-    
+
     .stChatMessage:hover {{
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
     }}
-    
+
     /* Custom Chat Message Formatting */
-    .chat-message {
+    .chat-message {{
         margin-bottom: 1.5rem !important; /* Increased vertical spacing */
-    }
-    .message-role {
+    }}
+    .message-role {{
         font-weight: 600 !important;
         font-size: 1rem !important;
         color: rgba(240, 240, 240, 0.95) !important; /* Brighter color for role */
         margin-bottom: 0.5rem !important;
         display: block;
-    }
-    .message-content {
+    }}
+    .message-content {{
         line-height: 1.6 !important;
         padding-left: 1.5rem; /* Indent content under role */
         border-left: 2px solid rgba(200, 200, 200, 0.15); /* Subtle left border for structure */
         color: rgba(210, 210, 210, 0.95) !important;
-    }
+    }}
 
     /* File badges - pure transparent */
     .file-badge {{
@@ -203,13 +203,13 @@ def set_page_background_and_style(file_path):
         color: rgba(180, 180, 180, 0.8);
         transition: all 0.3s ease;
     }}
-    
+
     .file-badge:hover {{
         background: transparent;
         border: none;
         color: rgba(220, 220, 220, 1);
     }}
-    
+
     /* Data tool buttons - no special styling */
     .data-tool-button button {{
         background: transparent !important;
@@ -222,39 +222,39 @@ def set_page_background_and_style(file_path):
         border: none !important;
         box-shadow: none !important;
     }}
-    
+
     /* Minimal scrollbar */
     ::-webkit-scrollbar {{
         width: 6px;
         background: transparent;
     }}
-    
+
     ::-webkit-scrollbar-thumb {{
         background: rgba(150, 150, 150, 0.3);
         border-radius: 3px;
     }}
-    
+
     ::-webkit-scrollbar-thumb:hover {{
         background: rgba(180, 180, 180, 0.5);
     }}
-    
+
     /* Placeholder text */
     ::placeholder {{
         color: rgba(150, 150, 150, 0.5) !important;
     }}
-    
+
     /* Selectbox - transparent */
     div[data-baseweb="select"] > div {{
         background: transparent !important;
         border: none !important;
     }}
-    
+
     div[data-baseweb="select"]:hover > div {{
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
     }}
-    
+
     /* Footer */
     .footer {{
         font-size: 0.85rem;
@@ -263,41 +263,41 @@ def set_page_background_and_style(file_path):
         font-weight: 300;
         letter-spacing: 1px;
     }}
-    
+
     hr {{
         opacity: 0.1;
         border-color: rgba(200, 200, 200, 0.15);
         box-shadow: none;
     }}
-    
+
     /* Expander - transparent */
     .stExpander {{
         background: transparent !important;
         border: none !important;
     }}
-    
+
     .stExpander:hover {{
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
     }}
-    
+
     /* Caption text */
     .stCaptionContainer, small {{
         color: rgba(160, 160, 160, 0.7) !important;
         font-weight: 300;
     }}
-    
+
     /* File uploader */
     .stFileUploader label {{
         color: rgba(180, 180, 180, 0.8) !important;
     }}
-    
+
     .stFileUploader section {{
         background: transparent !important;
         border: none !important;
     }}
-    
+
     .stFileUploader section:hover {{
         background: transparent !important;
         border: none !important;
