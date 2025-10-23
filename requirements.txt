@@ -3,3 +3,5 @@ google-generativeai
 pandas 
 tinydb
 gtts
+markdown2 
+weasyprint
