@@ -91,10 +91,10 @@ def set_page_background_and_style(file_path):
         color: rgba(220, 220, 220, 0.95) !important;
         font-weight: 400 !important;
     }
-    th {{
+    th {
         font-weight: 600 !important;
         color: rgba(240, 240, 240, 1) !important;
-    }}
+    } /* End of Markdown Table (for Prescriptions) */
     
     /* Remove all borders from sidebar */
     [data-testid="stSidebar"] {{
