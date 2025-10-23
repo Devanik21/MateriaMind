@@ -6,6 +6,7 @@ import re
 from typing import List, Dict, Any
 import pandas as pd
 from io import StringIO
+import io
 import base64
 from tinydb import TinyDB, Query
 import os
@@ -14,6 +15,7 @@ import time
 
 import markdown2
 from weasyprint import HTML
+from gtts import gTTS
 
 # Page configuration
 st.set_page_config(
@@ -673,6 +675,25 @@ def generate_prescription_pdf(prescription: Dict) -> bytes:
     pdf_bytes = HTML(string=final_html).write_pdf()
     return pdf_bytes
 
+def text_to_speech(text: str) -> bytes:
+    """Converts text to speech using gTTS and returns audio bytes."""
+    # Clean up text for TTS. Remove markdown characters that might be read aloud.
+    cleaned_text = re.sub(r'[\*#]', '', text)
+    if not cleaned_text.strip():
+        return None
+    
+    try:
+        tts = gTTS(text=cleaned_text, lang='en', slow=False)
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return fp.read()
+    except Exception as e:
+        # Log the error for debugging but don't show a warning to the user
+        # This prevents the app from breaking if the TTS service fails.
+        print(f"gTTS Error: {e}")
+        return None
+
 def login_page():
     """Displays the login page and handles authentication."""
     st.markdown("""
@@ -731,6 +752,12 @@ def display_chat_message(message: Dict):
             <div class="message-content">{content}</div>
         </div>
         """, unsafe_allow_html=True)
+        # Add audio player for assistant's messages
+        with st.spinner("🎤 Generating audio..."):
+            audio_bytes = text_to_speech(content)
+        if audio_bytes:
+            st.audio(audio_bytes, format="audio/mp3")
+
     else:
         st.markdown(f"""
         <div class="chat-message system-message">
@@ -1069,7 +1096,7 @@ def display_prescription(prescription: Dict):
         )
     
     with col3:
-        csv_buffer = StringIO()
+        csv_buffer = io.StringIO()
         df.to_csv(csv_buffer, index=False)
         csv_content = csv_buffer.getvalue()
         st.download_button(
