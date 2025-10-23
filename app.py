@@ -12,6 +12,7 @@ from tinydb import TinyDB, Query
 import os
 import hmac
 import time
+import PyPDF2
 
 import markdown2
 from weasyprint import HTML
@@ -25,166 +26,261 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for beautiful styling
-st.markdown("""
-<style>
-    /* Main container styling */
-    .main {
-        padding: 2rem;
-    }
+def get_base64_of_bin_file(bin_file):
+    """Encodes a binary file to a base64 string."""
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+def set_page_background_and_style(file_path):
+    """Sets the background image and applies custom CSS styles."""
+    if not os.path.exists(file_path):
+        st.error(f"Error: Background image not found at '{file_path}'.")
+        return
     
-    /* Header styling */
-    .header-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
+    base64_img = get_base64_of_bin_file(file_path)
     
-    .header-title {
-        color: white;
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin: 0;
+    css_text = f'''
+    <style>
+    .stApp {{
+        background-image: url("data:image/png;base64,{base64_img}");
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    
+    /* 100% Pure Transparency - No boxes, no borders */
+    [data-testid="stHeader"],
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div,
+    [data-testid="stSidebarContent"],
+    [data-testid="stBottomBlockContainer"],
+    [data-testid="stChatInputContainer"],
+    [data-testid="stFileUploader"],
+    [data-testid="stFileUploaderDropzone"],
+    [data-testid="stFileUploaderDropzoneInstructions"],
+    .stTextArea,
+    .stTextInput,
+    .stChatMessage,
+    [data-testid="stChatMessageContent"],
+    .element-container,
+    .stMarkdown,
+    section[data-testid="stSidebar"],
+    .stSelectbox,
+    div[data-baseweb="select"],
+    .stExpander,
+    [data-testid="stSidebar"]::before {{
+        background: transparent !important;
+        backdrop-filter: none !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    
+    /* Remove all borders from sidebar */
+    [data-testid="stSidebar"] {{
+        border-right: none !important;
+    }}
+    
+    /* Pure transparent inputs - no borders */
+    textarea, input {{
+        background: transparent !important;
+        border: none !important;
+        color: rgba(200, 200, 200, 0.9) !important;
+        transition: all 0.3s ease !important;
+        box-shadow: none !important;
+    }}
+    
+    textarea:hover, input:hover,
+    textarea:focus, input:focus {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: rgba(220, 220, 220, 1) !important;
+    }}
+    
+    /* Pure transparent buttons - no borders */
+    button {{
+        background: transparent !important;
+        border: none !important;
+        color: rgba(200, 200, 200, 0.85) !important;
+        transition: all 0.3s ease !important;
+        box-shadow: none !important;
+    }}
+    
+    button:hover {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: rgba(240, 240, 240, 1) !important;
+        transform: none !important;
+    }}
+    
+    /* Gray-white text throughout */
+    body, h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown {{
+        color: rgba(200, 200, 200, 0.9) !important;
+        font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    }}
+    
+    h1, h2, h3 {{
+        font-weight: 300 !important;
         text-align: center;
-    }
+        letter-spacing: 2px;
+    }}
     
-    .header-subtitle {
-        color: #f0f0f0;
-        font-size: 1.2rem;
-        text-align: center;
-        margin-top: 0.5rem;
-    }
+    h1 {{
+        font-size: 3rem !important;
+        color: rgba(220, 220, 220, 0.95) !important;
+    }}
     
-    /* Chat message styling */
-    .chat-message {
-        padding: 1.5rem;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
+    .subtitle {{
+        color: rgba(180, 180, 180, 0.8);
+        font-size: 1.1rem;
+        margin-top: -10px;
+        letter-spacing: 3px;
+        font-weight: 300;
+    }}
     
-    .user-message {
-        background-color: black;
-        color: white;
-        border-left: 4px solid #2196f3;
-    }
+    /* Transparent chat messages - no borders */
+    .stChatMessage {{
+        background: transparent !important;
+        border: none !important;
+        padding-left: 0px !important;
+        margin: 8px 0 !important;
+    }}
     
-    .assistant-message {
-        background-color: black;
-        color: white;
-        border-left: 4px solid #9c27b0;
-    }
+    .stChatMessage:hover {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
     
-    .system-message {
-        background-color: black;
-        color: white;
-        border-left: 4px solid #ff9800;
-    }
-    
-    .message-role {
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .message-content {
-        line-height: 1.6;
-    }
-    
-    /* Prescription card styling */
-    .prescription-card {
-        background: black;
-        color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        margin: 2rem 0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .prescription-header {
-        text-align: center;
-        color: white;
-        border-bottom: 2px solid #667eea;
-        padding-bottom: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    /* Button styling */
-    .stButton>button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+    /* File badges - pure transparent */
+    .file-badge {{
+        display: inline-block;
+        background: transparent;
         border: none;
-        padding: 0.5rem 2rem;
-        border-radius: 25px;
-        font-weight: bold;
+        padding: 4px 10px;
+        margin: 3px;
+        font-size: 0.85rem;
+        color: rgba(180, 180, 180, 0.8);
         transition: all 0.3s ease;
-    }
+    }}
     
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
+    .file-badge:hover {{
+        background: transparent;
+        border: none;
+        color: rgba(220, 220, 220, 1);
+    }}
     
-    /* Info box styling */
-    .info-box {
-        background-color: black;
-        color: white;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #4caf50;
-        margin: 1rem 0;
-    }
+    /* Data tool buttons - no special styling */
+    .data-tool-button button {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    .data-tool-button button:hover {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
     
-    .warning-box {
-        background-color: black;
-        color: white;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #ffc107;
-        margin: 1rem 0;
-    }
+    /* Minimal scrollbar */
+    ::-webkit-scrollbar {{
+        width: 6px;
+        background: transparent;
+    }}
     
-    /* Table styling */
-    .dataframe {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
+    ::-webkit-scrollbar-thumb {{
+        background: rgba(150, 150, 150, 0.3);
+        border-radius: 3px;
+    }}
     
-    /* Sidebar styling */
-    .css-1d391kg {
-        background-color: #f8f9fa;
-    }
+    ::-webkit-scrollbar-thumb:hover {{
+        background: rgba(180, 180, 180, 0.5);
+    }}
     
-    /* Statistics card */
-    .stat-card {
-        background: black;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin-bottom: 1rem;
+    /* Placeholder text */
+    ::placeholder {{
+        color: rgba(150, 150, 150, 0.5) !important;
+    }}
+    
+    /* Selectbox - transparent */
+    div[data-baseweb="select"] > div {{
+        background: transparent !important;
+        border: none !important;
+    }}
+    
+    div[data-baseweb="select"]:hover > div {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    
+    /* Footer */
+    .footer {{
+        font-size: 0.85rem;
+        color: rgba(160, 160, 160, 0.7);
         text-align: center;
-    }
+        font-weight: 300;
+        letter-spacing: 1px;
+    }}
     
-    .stat-value {
-        font-size: 2rem;
-        font-weight: bold;
-        color: white;
-    }
+    hr {{
+        opacity: 0.1;
+        border-color: rgba(200, 200, 200, 0.15);
+        box-shadow: none;
+    }}
     
-    .stat-label {
-        color: #ccc;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-    }
-</style>
-""", unsafe_allow_html=True)
+    /* Expander - transparent */
+    .stExpander {{
+        background: transparent !important;
+        border: none !important;
+    }}
+    
+    .stExpander:hover {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    
+    /* Caption text */
+    .stCaptionContainer, small {{
+        color: rgba(160, 160, 160, 0.7) !important;
+        font-weight: 300;
+    }}
+    
+    /* File uploader */
+    .stFileUploader label {{
+        color: rgba(180, 180, 180, 0.8) !important;
+    }}
+    
+    .stFileUploader section {{
+        background: transparent !important;
+        border: none !important;
+    }}
+    
+    .stFileUploader section:hover {{
+        background: transparent !important;
+        border: none !important;
+    }}
+    </style>
+    '''
+    st.markdown(css_text, unsafe_allow_html=True)
+
+def extract_text_from_pdf(pdf_file):
+    """Extract text from PDF file."""
+    try:
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text() + "\n"
+        return text.strip()
+    except Exception as e:
+        return f"Error reading PDF: {str(e)}"
+
+set_page_background_and_style("black_hole (1) (1).png")
 
 # Database setup
 DB_PATH = "homeo_clinic.json"
@@ -697,9 +793,9 @@ def text_to_speech(text: str) -> bytes:
 def login_page():
     """Displays the login page and handles authentication."""
     st.markdown("""
-    <div class="header-container">
-        <h1 class="header-title">🌿 HomeoClinic AI</h1>
-        <p class="header-subtitle">Login Required</p>
+    <div>
+        <h1>🌿 HomeoClinic AI</h1>
+        <p class="subtitle">Login Required</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -708,7 +804,7 @@ def login_page():
         st.stop()
 
     with st.form("login_form"):
-        st.markdown("<h3 style='text-align: center; color: white;'>Enter Password to Continue</h3>", unsafe_allow_html=True)
+        st.markdown("<h3>Enter Password to Continue</h3>", unsafe_allow_html=True)
         password = st.text_input(
             "Password", 
             type="password", 
@@ -799,9 +895,9 @@ def save_consultation_history(prescription: Dict):
 def display_header():
     """Display the app header"""
     st.markdown("""
-    <div class="header-container">
-        <h1 class="header-title">🌿 HomeoClinic AI</h1>
-        <p class="header-subtitle">Your Virtual Homeopathy Doctor - Natural Healing Through AI</p>
+    <div>
+        <h1>🌿 HomeoClinic AI</h1>
+        <p class="subtitle">Your Virtual Homeopathy Doctor - Natural Healing Through AI</p>
     </div>
     """, unsafe_allow_html=True)
 
