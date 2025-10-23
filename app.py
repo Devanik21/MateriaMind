@@ -5,12 +5,13 @@ import json
 import re
 from typing import List, Dict, Any
 import pandas as pd
-from io import StringIO
+from io import StringIO, BytesIO
 import base64
 from tinydb import TinyDB, Query
 import os
 import hmac
 import time
+from gtts import gTTS
 
 # Page configuration
 st.set_page_config(
@@ -588,6 +589,21 @@ def create_download_link(text: str, filename: str) -> str:
     b64 = base64.b64encode(text.encode()).decode()
     return f'<a href="data:text/markdown;base64,{b64}" download="{filename}" style="text-decoration: none;"><button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.5rem 2rem; border-radius: 25px; font-weight: bold; cursor: pointer;">📥 Download Prescription</button></a>'
 
+def text_to_speech_b64(text: str) -> str:
+    """Converts text to speech and returns a base64 encoded audio string."""
+    if not text or not text.strip():
+        return None
+    try:
+        sound_file = BytesIO()
+        tts = gTTS(text=text, lang='en', slow=False)
+        tts.write_to_fp(sound_file)
+        sound_file.seek(0)
+        audio_b64 = base64.b64encode(sound_file.read()).decode('utf-8')
+        return audio_b64
+    except Exception as e:
+        print(f"Could not generate audio: {e}")
+        return None
+
 def login_page():
     """Displays the login page and handles authentication."""
     st.markdown("""
@@ -631,12 +647,26 @@ def display_chat_message(message: Dict):
     """Display a chat message with appropriate styling"""
     role = message["role"]
     content = message["content"]
+
+    audio_player_html = ""
+    if role != 'system':
+        audio_b64 = text_to_speech_b64(content)
+        if audio_b64:
+            audio_player_html = f"""
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                <span>🔊</span>
+                <audio controls style="height: 30px;">
+                    <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mpeg">
+                </audio>
+            </div>
+            """
     
     if role == "user":
         st.markdown(f"""
         <div class="chat-message user-message">
             <div class="message-role">👤 You</div>
             <div class="message-content">{content}</div>
+            {audio_player_html}
         </div>
         """, unsafe_allow_html=True)
     elif role == "assistant":
@@ -644,6 +674,7 @@ def display_chat_message(message: Dict):
         <div class="chat-message assistant-message">
             <div class="message-role">🩺 Dr. Elysian</div>
             <div class="message-content">{content}</div>
+            {audio_player_html}
         </div>
         """, unsafe_allow_html=True)
     else:
