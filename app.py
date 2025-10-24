@@ -1037,6 +1037,8 @@ def display_sidebar():
                         st.success(f"Loaded session: {session_id}")
                         st.rerun()
         
+        sessions = get_session_list()
+
         # Load previous sessions
         st.markdown("### 📂 Previous Sessions")
         sessions = get_session_list()
