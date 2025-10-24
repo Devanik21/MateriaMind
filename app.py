@@ -1418,8 +1418,11 @@ def main():
         key="file_uploader"
     )
 
-    # Chat input
-    user_input = st.chat_input("Describe your symptoms or ask a question...")
+    # Chat input is now in the sidebar
+    with st.sidebar:
+        with st.form("chat_form", clear_on_submit=True):
+            user_input = st.text_area("Your message:", placeholder="Describe your symptoms or ask a question...", key="chat_input_area", label_visibility="collapsed")
+            send_button = st.form_submit_button("Send", use_container_width=True)
     
     # Process file uploads first, as they are a form of user input that triggers a rerun
     if uploaded_files:
@@ -1460,7 +1463,7 @@ def main():
             save_session_to_db(st.session_state.session_id, st.session_state.messages, st.session_state.patient_info, st.session_state.symptoms_collected, st.session_state.current_prescription)
             st.rerun()
 
-    if user_input:
+    if send_button and user_input:
         # Add user message
         st.session_state.messages.append({"role": "user", "content": user_input})
         st.session_state.total_messages += 1
