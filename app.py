@@ -595,7 +595,7 @@ Remember: You are a vessel for profound healing. Your purpose is to guide the pa
 def initialize_chat_model():
     """Initialize the chat model and start a persistent chat session"""
     if st.session_state.chat_model is None:
-        st.session_state.chat_model = genai.GenerativeModel('gemma-3-27b-it')
+        st.session_state.chat_model = genai.GenerativeModel('gemini-flash-lite-latest')
 
         # Start chat with system prompt
         st.session_state.chat_session = st.session_state.chat_model.start_chat(
