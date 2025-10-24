@@ -1039,6 +1039,7 @@ def display_sidebar():
         
         sessions = get_session_list()
 
+
         # Load previous sessions
         st.markdown("### 📂 Previous Sessions")
         sessions = get_session_list()
