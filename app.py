@@ -1421,7 +1421,7 @@ def main():
     # Chat input is now in the sidebar
     with st.sidebar:
         with st.form("chat_form", clear_on_submit=True):
-            user_input = st.text_area("Your message:", placeholder="Describe your symptoms or ask a question...", key="chat_input_area", label_visibility="collapsed")
+            user_input = st.text_area("Your message:", placeholder="Describe your symptoms or ask a question...", key="chat_input_area", label_visibility="collapsed", height=100)
             send_button = st.form_submit_button("Send", use_container_width=True)
     
     # Process file uploads first, as they are a form of user input that triggers a rerun
