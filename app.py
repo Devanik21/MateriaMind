@@ -317,7 +317,7 @@ def extract_text_from_pdf(pdf_file):
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
 
-set_page_background_and_style("black_hole (1) (1).png")
+set_page_background_and_style("Gemini_Generated_Image_en6x3oen6x3oen6x.png")
 
 # Database setup
 DB_PATH = "homeo_clinic.json"
