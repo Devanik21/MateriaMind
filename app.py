@@ -945,13 +945,6 @@ def display_header():
 def display_sidebar():
     """Display sidebar with information and statistics"""
     with st.sidebar:
-        st.markdown("### ℹ️ About HomeoClinic AI")
-        st.markdown("""
-        **Features:**
-        - 💬 Interactive consultation
-        - 🧠 Persistent memory
-        - 💾 Auto-save to database
-        """)
         st.markdown("### 📊 Session Statistics")
         
         col1, col2 = st.columns(2)
@@ -962,13 +955,6 @@ def display_sidebar():
                 <div class="stat-label">Messages</div>
             </div>
             """, unsafe_allow_html=True)
-
-        st.markdown("### 🌟 Homeopathy Principles")
-        st.markdown("""
-        - **Like Cures Like**
-        - **Minimum Dose**
-        - **Individualization**
-        """)
         
         with col2:
             st.markdown(f"""
@@ -980,6 +966,8 @@ def display_sidebar():
         
         st.markdown("---")
         
+        # Session management
+        st.markdown("### 💾 Session Management")
         
         col1, col2 = st.columns(2)
         with col1:
@@ -1016,6 +1004,9 @@ def display_sidebar():
                 st.session_state.processed_files = set()
                 st.rerun()
         
+        # Load previous sessions
+        st.markdown("### 📂 Previous Sessions")
+        sessions = get_session_list()
         if sessions:
             session_options = [f"{s['session_id']} ({s.get('message_count', 0)} msgs)" for s in reversed(sessions[-10:])]
             selected = st.selectbox("Load Session:", ["Current"] + session_options, key="session_selector")
@@ -1037,15 +1028,12 @@ def display_sidebar():
                         st.success(f"Loaded session: {session_id}")
                         st.rerun()
         
-        sessions = get_session_list()
-
-
-        # Load previous sessions
-        st.markdown("### 📂 Previous Sessions")
-        sessions = get_session_list()
         st.markdown("---")
+        
         if st.button("📜 View All Consultations", use_container_width=True):
             st.session_state.show_history = not st.session_state.get('show_history', False)
+            st.rerun()
+        
         st.markdown("---")
         
         st.markdown("### ℹ️ About HomeoClinic AI")
@@ -1057,6 +1045,8 @@ def display_sidebar():
         - 📥 Downloadable reports
         - 📚 Complete history
         """)
+        
+        st.markdown("---")
         
         st.markdown("### 🌟 Homeopathy Principles")
         st.markdown("""
@@ -1431,7 +1421,7 @@ def main():
     # Chat input is now in the sidebar
     with st.sidebar:
         with st.form("chat_form", clear_on_submit=True):
-            user_input = st.text_area("Your message:", placeholder="Describe your symptoms or ask a question...", key="chat_input_area", label_visibility="collapsed", height=10)
+            user_input = st.text_area("Your message:", placeholder="Describe your symptoms or ask a question...", key="chat_input_area", label_visibility="collapsed")
             send_button = st.form_submit_button("Send", use_container_width=True)
     
     # Process file uploads first, as they are a form of user input that triggers a rerun
@@ -1538,9 +1528,5 @@ if __name__ == "__main__":
             with st.sidebar:
                 st.markdown("---")
                 display_memory_indicator()
-                st.markdown("### 💾 Session Management")
-        st.markdown("---")
-        if st.button("📜 View All Consultations", use_container_width=True):
-            st.session_state.show_history = not st.session_state.get('show_history', False)
         
         main()
