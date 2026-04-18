@@ -1,0 +1,4 @@
+# Default configuration
+app:
+  name: MateriaMind
+  version: 1.0.0
